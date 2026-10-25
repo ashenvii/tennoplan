@@ -9,9 +9,8 @@ Consolidated all documentation into the repo (`docs/decisions/0007`). New: `docs
 
 Everything as it stood before is in `Main_Vault/_tennoplan-docs-backup-2026-10-25.zip` (repo docs, vault Notes, Documents dossier, auto-memory).
 
-## Still to do from the cleanup (needs the author's yes)
-- Delete the old copies outside git: vault `Notes/`, `Documents/Tennoplan Research/`, and in the repo the ignored `Notes/`, `Research/`, `.impeccable.legacy.md`, `snapshot.sh` and the `.git/hooks/post-commit` that calls it. The `.gitignore` entries for them were already removed, so they show as untracked until deleted.
-- Prune auto-memory down to preferences (keep repo authorship, low maintenance, no preview screenshot, frozen transitions; the rest now lives in `docs/` or `CLAUDE.md`).
+## Cleanup finished
+The old copies are deleted (vault `Notes/`, Documents dossier, ignored repo `Notes/` and `Research/`, `.impeccable.legacy.md`, `snapshot.sh`, the `post-commit` hook). Auto-memory is pruned to four preference files. The backup zip is the only record of the old layout.
 
 ## Verified
 - Paths cited in `docs/architecture.md` exist; routes, Dexie v9 and wrangler bindings were read from code.
@@ -24,6 +23,5 @@ Everything as it stood before is in `Main_Vault/_tennoplan-docs-backup-2026-10-2
 - No automated tests exist.
 
 ## Next
-1. Author approves the deletions and memory prune above.
-2. Redesign page by page, Celestial Pendulum first (see `docs/roadmap.md`).
-3. Weapon card UI rework when the author is ready.
+1. Redesign page by page, Celestial Pendulum first (see `docs/roadmap.md`).
+2. Weapon card UI rework when the author is ready.
