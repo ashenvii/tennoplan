@@ -12,7 +12,7 @@ Overwrite this file at the end of every session. Keep it under one screen. Every
 ## Verified on 2026-10-25
 - `npx tsc -b` (root): no errors.
 - `cd cloudflare-worker && npx tsc --noEmit`: no errors.
-- `cd cloudflare-worker && npm run build-codex`: exits 0, 864 notes applied. It reports one unknown icon token, `<OVERGUARD_GAIN>` (Narin), from new upstream data.
+- `cd cloudflare-worker && npm run build-codex`: exits 1, 864 notes applied. An unknown icon token fails the build (`process.exit(1)` in the token scan); the current one is `<OVERGUARD_GAIN>` (Narin), from new upstream data.
 - Live worker `/v1/pulse` answers with a current sync time.
 - GitHub "Type-check" workflow (`check.yml`) run `40228533422` on `18be996`: success, app and worker type-checks both passed.
 - No production deployment, workflow re-enable, or Cloudflare worker deletion was done during the cleanup.

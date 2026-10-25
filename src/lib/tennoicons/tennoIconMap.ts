@@ -137,4 +137,8 @@ export const TENNOICON_FLAG_CODES = new Set([
   '<ACTIVATE_ABILITY_5>',
   // Stance-combo prelude notation (Emergence Dissipate etc.). No icon.
   '<PRE_ATTACK>',
+  // Unfilled value placeholder in Narin's Naraemagi ("Gain <OVERGUARD_GAIN>
+  // Overguard"). Upstream ships the template variable, not a glyph, and there
+  // is no Overguard icon asset. Stripped, same as StatLine already did.
+  '<OVERGUARD_GAIN>',
 ]);
