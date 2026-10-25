@@ -9,7 +9,7 @@ enabled = true
 # ---------------------------------------------------------------------------
 # KV Namespace — TENNOPLAN_KV stores worldstate + codex blobs.
 # Keys:
-#   worldstate:current / previous / metadata   (~150KB, updated every 1 min)
+#   worldstate:current / previous / metadata   (~150KB, updated every 5 min)
 #   codex:current / previous / metadata        (~2-3MB, updated every 6 hours)
 # ---------------------------------------------------------------------------
 [[kv_namespaces]]

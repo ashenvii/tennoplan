@@ -1,0 +1,38 @@
+name: Type-check
+
+# Read-only checks. Runs on pull requests and on pushes to Development.
+# It deploys nothing and touches no secrets. The root `tsc -b` does not cover
+# cloudflare-worker/, so the worker is checked separately.
+
+on:
+  pull_request:
+  push:
+    branches: [Development]
+
+jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install app dependencies
+        run: npm ci
+
+      - name: Type-check app
+        run: npx tsc -b
+
+      - name: Install worker dependencies
+        working-directory: cloudflare-worker
+        run: npm ci
+
+      - name: Type-check worker
+        working-directory: cloudflare-worker
+        run: npx tsc --noEmit
