@@ -35,7 +35,6 @@ Reference-for-Tennoplan/
 .continue/
 skills/
 skills-lock.json
-CLAUDE.md
 snapshot.sh
 
 # Internal design / session notes (these live in the local Obsidian vault)

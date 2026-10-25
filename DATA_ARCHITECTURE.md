@@ -2,7 +2,7 @@
 
 A complete map of how data flows from external sources → Cloudflare backend → Tennoplan frontend → local storage.
 
-*Last verified against the codebase: 2026-06-03.*
+*Last fully verified: 2026-06-03. Corrected 2026-10-25 for three later changes: the live poll is now a 5 minute pulse-gated poll (`docs/decisions/0002`), Dexie is at v9, and the `items` table was dropped (`docs/decisions/0004`). The drop-data section and its flow steps were not re-verified and still describe the pre-v9 behaviour.*
 
 ---
 
@@ -57,12 +57,12 @@ Static data is heavy and changes rarely, so it is built **once in CI** and cache
 └─────────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────────┐
-│                     Client Local Storage (Dexie v8)                  │
+│                     Client Local Storage (Dexie v9)                  │
 ├─────────────────────────────────────────────────────────────────────┤
 │  • worldstate      (ParsedWorldstate snapshot: current | previous)  │
 │  • syncMetadata    (per-dataset sync state: worldstate | codex)     │
 │  • tennoplanItems  (codex catalogue, ~8k items)                     │
-│  • items / dropLocations / dataSyncState (legacy drop-data path)    │
+│  • dropLocations / dataSyncState (items table dropped in v9)    │
 │  • cache           (ephemeral, TTL-indexed) + others (see schema)   │
 └─────────────────────────────────────────────────────────────────────┘
 ```
@@ -75,7 +75,7 @@ Static data is heavy and changes rarely, so it is built **once in CI** and cache
 
 **Client engine:** `src/services/WorldstateSync.ts` (singleton) + `src/hooks/useWorldstate.ts` (shared subscriber) + `src/adapters/storage/worldstateStore.ts` (Dexie I/O).
 **Source:** the Tennoplan Cloudflare Worker only — `${VITE_WORLDSTATE_WORKER_URL}/v1/worldstate`. There is **no direct warframestat.us fallback in the browser**; all upstream fallback logic lives in the Worker.
-**Client freshness:** 60-second poll while the tab is visible.
+**Client freshness:** 5 minute poll of the small `/v1/pulse` head; the full `/v1/worldstate` is fetched only when its `semanticEtag` changes.
 **Storage:** Dexie `worldstate` table (snapshot) + `syncMetadata` table (sync state).
 
 #### Worker side (cron `*/5 * * * *`, every 5 min)
@@ -90,7 +90,7 @@ Static data is heavy and changes rarely, so it is built **once in CI** and cache
 
 #### Client side (`WorldstateSync`)
 
-- `WorldstateSync.init()` (called once in `AppShell`) → immediate sync, then a 60 s poll loop.
+- `WorldstateSync.init()` (called once in `AppShell`) → immediate sync, then a 5 minute pulse-gated poll loop.
 - Conditional GET: sends `If-None-Match` with the stored ETag.
   - **304 Not Modified** → keep cached snapshot, mark heartbeat `live`.
   - **200 OK** → write new `ParsedWorldstate` to `db.worldstate`, update `db.syncMetadata`.
@@ -142,7 +142,7 @@ Fetches `/v1/codex`, stores rows in Dexie `tennoplanItems` (PK `uniqueName`, ind
 **Service:** `src/adapters/api/DropDataService.ts`.
 **Source:** `drops.warframestat.us/data/all.json`, fallback `raw.githubusercontent.com/WFCD/warframe-drop-data`.
 **Model:** download-once. Data only enters Dexie when the user clicks "Refresh" (or accepts the stale banner on launch) and only leaves on "Clear Data".
-**Storage:** Dexie `items` + `dropLocations` + `dataSyncState`.
+**Storage:** Dexie `dropLocations` + `dataSyncState` (the `items` table was dropped in v9).
 
 > Note: this predates the codex pipeline and still feeds the legacy `items` / `dropLocations` tables. It coexists with `tennoplanItems` during the ongoing migration of UI consumers onto the codex. Drop *tables* are also folded into the codex blob by the CI enricher.
 
@@ -173,7 +173,7 @@ Located: `src/adapters/storage/db.ts`. Migrations are additive — each version 
 | `worldstate` | `key` (`current` \| `previous`) | Full `ParsedWorldstate` snapshot from `/v1/worldstate` |
 | `syncMetadata` | `id` (`worldstate` \| `codex`) | Per-dataset sync state: lastSync, etag, version, source, quality, errorCount |
 | `tennoplanItems` | `uniqueName` | Codex catalogue (~8k items); indexed `category`, `masteryRank`, `vaulted` |
-| `items` | `uniqueName` | **Legacy** drop-data catalogue with pre-resolved `iconUrl` (DropDataService) |
+| `items` | n/a | **Dropped in Dexie v9.** Items resolve through the codex (`docs/decisions/0004`) |
 | `dropLocations` | `locationKey` | Normalized drop locations; compound indexes for Celestial Pendulum facets |
 | `dataSyncState` | `id` (`items` \| `dropLocations`) | Legacy drop-data sync metadata |
 | `cache` | `key` | Ephemeral data, `expiresAt`-indexed (per-feature cache rows, ETag/source tags) |
@@ -243,7 +243,7 @@ Total ≈ 590/day, leaving headroom for manual ops. Don't tighten the worldstate
 
 1. **Static (CI, every 6h):** GitHub Actions builds the codex blob from WFCD sources and PUTs it to Cloudflare KV. The Worker just serves it at `/v1/codex`. The client caches it once into `tennoplanItems` and treats the Codex as the canonical detail view.
 2. **Live (Worker cron, every 5 min):** the Worker refreshes worldstate from the official DE API (with mirror, community, and cycle-math fallbacks) into KV.
-3. **Client (every 60 s):** `WorldstateSync` polls `/v1/worldstate` with ETags, writes the `ParsedWorldstate` snapshot to Dexie, and updates the heartbeat. `useWorldstate` fans it out to every feature hook.
+3. **Client (every 5 min):** `WorldstateSync` polls `/v1/pulse` and fetches `/v1/worldstate` only when the etag moves, writes the `ParsedWorldstate` snapshot to Dexie, and updates the heartbeat. `useWorldstate` fans it out to every feature hook.
 4. **Join key:** everything is wired together by `uniqueName`, resolved against the static codex — never by display name.
 5. **Offline:** the UI always reads from local Dexie cache; network failures degrade gracefully to `cached`/`stale`/`offline` rather than blanking the app.
 6. **Future:** a Tauri + Rust `EE.log` parser will add user inventory, persisted the same way.
