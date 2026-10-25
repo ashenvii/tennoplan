@@ -31,7 +31,7 @@ Run the worker type-check and `build-codex` before merging any change under `clo
 
 ## Git and deploy
 
-- Commits read as the author's own: no co-author trailer, no mention of AI in commits, PRs, or code comments. Write in the author's voice.
+- Commit messages are written in the author's voice, with no attribution trailers.
 - "git push dev" means `git push origin Development`. Updating `main` is `git merge Development --no-ff` from `main`. Never force-push or delete branches without asking.
 - Pushing to `main` triggers `deploy.yml` (frontend and worker) and, for pipeline paths, `build-codex.yml`. That is production. Ask first.
 - Three Cloudflare Workers exist (checked 2026-10-25). The API is `app` (`cloudflare-worker/`, config `wrangler.toml`, serves `/v1/*`, cron `*/5`). The frontend is `tennoplan`, deployed from the repo root by CI using the config the Vite Cloudflare plugin generates (the `deploy.yml` job label still says "web worker"). `web` is an older frontend copy, last deployed 2026-06-13, still serving an old build; CI no longer updates it. There is no root `wrangler.jsonc` (it was deleted on purpose in `77d8916` after it overwrote the API worker). Do not run `wrangler deploy` by hand from the root. Deploy the API only with `cd cloudflare-worker && npm run deploy`.
