@@ -1,6 +1,6 @@
 # Tennoplan
 
-**An offline-first Warframe companion desktop app** — a single hub for tracking world cycles, bounties, drop tables, and progression, built to stay fast and fully usable without a network connection.
+**An offline-first Warframe companion desktop app** - a single hub for tracking world cycles, bounties, drop tables, and progression, built to stay fast and fully usable without a network connection.
 
 Built with **Tauri 2 · React 19 · TypeScript · Vite · Cloudflare Workers**.
 
@@ -14,9 +14,9 @@ Built with **Tauri 2 · React 19 · TypeScript · Vite · Cloudflare Workers**.
 
 Warframe's in-game information is scattered across world timers, rotating bounties, sprawling drop tables, and a huge item codex. Tennoplan pulls all of it into one desktop surface:
 
-- **Codex** — the canonical detail view for every item, mod, resource, and reward. Built from a regularly-rebuilt data blob; every other screen is a window into it.
-- **Celestial Pendulum** — a live "observatory" of world cycles (Cetus, Fortuna, Deimos, Zariman, Duviri) and their rotating bounties, in a master–detail layout. World day/night clocks and bounty rotation are driven independently by live worldstate.
-- **Void Reliquaries · Solar Rail Feed · Ascension Registry · Dailies & Weeklies** — additional tracking surfaces (live fissures, invasions/alerts/events, mastery progression, and a daily/weekly checklist). Several of these are mid-rebuild on the shared live data backbone.
+- **Codex** - the canonical detail view for every item, mod, resource, and reward. Built from a regularly-rebuilt data blob; every other screen is a window into it.
+- **Celestial Pendulum** - a live "observatory" of world cycles (Cetus, Fortuna, Deimos, Zariman, Duviri) and their rotating bounties, in a master–detail layout. World day/night clocks and bounty rotation are driven independently by live worldstate.
+- **Void Reliquaries · Solar Rail Feed · Ascension Registry · Dailies & Weeklies** - additional tracking surfaces (live fissures, invasions/alerts/events, mastery progression, and a daily/weekly checklist). Several of these are mid-rebuild on the shared live data backbone.
 
 > Status: active development. The Codex and Celestial Pendulum tabs are the most complete; other tabs are being rebuilt on the same foundation.
 
@@ -24,7 +24,7 @@ Warframe's in-game information is scattered across world timers, rotating bounti
 
 ## Architecture
 
-Tennoplan follows a **hexagonal (clean) architecture**. The core domain has zero dependencies on React, the storage layer, or `fetch` — frameworks live only at the edges.
+Tennoplan follows a **hexagonal (clean) architecture**. The core domain has zero dependencies on React, the storage layer, or `fetch` - frameworks live only at the edges.
 
 ```
 src/core/domain/       Pure TypeScript types & entities
@@ -42,9 +42,9 @@ cloudflare-worker/     Edge API: /v1 worldstate + codex, cron updater
 
 A core principle keeps the app correct *and* offline-capable:
 
-- **Static data** (the item/codex "nouns") is heavy and changes rarely — it's built once and cached locally in IndexedDB (download-once).
-- **Live data** (the "verbs" and the clock — resets, fissures, bounty rotation) is light and changes constantly — it's polled from a Cloudflare Worker.
-- The two are joined by a stable `uniqueName` key, **always resolved against the static codex — never by display name**, which collides.
+- **Static data** (the item/codex "nouns") is heavy and changes rarely - it's built once and cached locally in IndexedDB (download-once).
+- **Live data** (the "verbs" and the clock - resets, fissures, bounty rotation) is light and changes constantly - it's polled from a Cloudflare Worker.
+- The two are joined by a stable `uniqueName` key, **always resolved against the static codex - never by display name**, which collides.
 
 This split means the UI renders instantly from local cache and only the small, fast-changing slice needs the network.
 
@@ -113,15 +113,19 @@ src-tauri/            Tauri (Rust) desktop shell
 cloudflare-worker/    Edge API + scheduled worldstate updater
 scripts/              Build/codegen utilities
 public/               Static assets (fonts, icons)
+docs/                 Architecture, roadmap, data sources, decisions
 .impeccable.md        Design-system specification
-DATA_ARCHITECTURE.md  Data-flow reference
 ```
+
+## Documentation
+
+Everything lives in this repo. Start with [docs/architecture.md](docs/architecture.md) for how data flows and [docs/roadmap.md](docs/roadmap.md) for where the project is going. Past decisions and their reasons are in [docs/decisions/](docs/decisions/). Rules for working in the repo are in [CLAUDE.md](CLAUDE.md), and the current task state is in [HANDOFF.md](HANDOFF.md).
 
 ---
 
 ## Data sources
 
-Tennoplan builds on the Warframe community data ecosystem (warframestat.us, WFCD item data, warframe.market) plus first-party Cloudflare infrastructure for caching and delivery. All static data is cached locally so the app works offline after first sync.
+Tennoplan builds on the Warframe community data ecosystem (warframestat.us, WFCD item data, warframe.market) plus first-party Cloudflare infrastructure for caching and delivery. All static data is cached locally so the app works offline after first sync. Field-level detail is in [docs/data-sources.md](docs/data-sources.md).
 
 ---
 

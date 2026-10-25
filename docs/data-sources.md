@@ -1,12 +1,14 @@
-# Tennoplan Data Sources — Coverage Map
+# Tennoplan Data Sources - Coverage Map
 
-> **What this document is:** A complete inventory of every data field, image, and piece of metadata your current sources can give you — and just as importantly, what they **can't**. Use this when designing codex views, tab features, or any UI that depends on Warframe data, so you don't design around fields that don't exist.
+> Field-by-field coverage of the data sources. Written 2026-05-27 and not re-verified since; check the codex build before trusting a count. How the data flows is in [architecture.md](architecture.md).
+
+> **What this document is:** A complete inventory of every data field, image, and piece of metadata your current sources can give you - and just as importantly, what they **can't**. Use this when designing codex views, tab features, or any UI that depends on Warframe data, so you don't design around fields that don't exist.
 >
 > **Last verified:** 2026-05-27 against the live `build-codex.ts` pipeline (worker version `wfcd-20260527`, 8,973 items in production).
 
 ---
 
-## TL;DR — what you have, at a glance
+## TL;DR - what you have, at a glance
 
 | Layer | Source | Used for | Refresh |
 |---|---|---|---|
@@ -14,15 +16,15 @@
 | **Drop tables** | WFCD `warframe-drop-data` (`drops.warframestat.us/data/all.json`) | Per-item drop locations, chances, rotations | Every 6h, bundled into codex blob |
 | **Live worldstate** | `api.warframestat.us/pc/` | Cycle timers, fissures, sorties, Nightwave, Baro, bounties, EDA | Every 5 min via Cloudflare cron |
 | **Icons / images** | `cdn.warframestat.us/img/<imageName>` | Single square icon per item | Static CDN |
-| **Market prices** | `api.warframe.market/v2/` | NOT integrated yet — available, not pulled | — |
-| **Wiki content** | `wiki.warframe.com` (no API) | Deep links only via `wikiaUrl` field | — |
+| **Market prices** | `api.warframe.market/v2/` | NOT integrated yet - available, not pulled | - |
+| **Wiki content** | `wiki.warframe.com` (no API) | Deep links only via `wikiaUrl` field | - |
 
 **Total codex items in production right now:** 8,973
 **Total drops indexed:** ~25,000+ (per-item, after inversion)
 
 ---
 
-## 1. WFCD `warframe-items` — the item universe
+## 1. WFCD `warframe-items` - the item universe
 
 Your single source of truth for everything that isn't drops or worldstate. Primary endpoint is `api.warframestat.us/<category>?only=<fields>` (smaller payload via field filtering); fallback is `raw.githubusercontent.com/WFCD/warframe-items/master/data/json/<Category>.json` (full payload). Some categories use GitHub raw as both primary and fallback because `api.warframestat.us` doesn't expose them.
 
@@ -52,7 +54,7 @@ Your single source of truth for everything that isn't drops or worldstate. Prima
 | `releaseDate` | string | ISO date |
 | `transmutable` | boolean | Can appear in mod transmutation |
 | `introduced` | `{name, date, url, parent}` | Which update added it |
-| `patchlogs` | `Array<{name, date, url, additions, changes, fixes}>` | **Capped at 20 most-recent entries per mod** (Ash alone has 135 — cap protects worker payload). |
+| `patchlogs` | `Array<{name, date, url, additions, changes, fixes}>` | **Capped at 20 most-recent entries per mod** (Ash alone has 135 - cap protects worker payload). |
 
 #### Warframes (~58)
 
@@ -63,16 +65,16 @@ Your single source of truth for everything that isn't drops or worldstate. Prima
 | `uniqueName`, `name`, `description` | string | |
 | `polarities` | string[] | Slot polarities (in order) |
 | `aura` | string | Aura slot polarity (separate field) |
-| `abilities` | `Array<{uniqueName, name, description, imageName}>` | **No per-rank stats, no energy cost, no scaling info — only flavor text + icon.** This is a hard limit, see §6. |
+| `abilities` | `Array<{uniqueName, name, description, imageName}>` | **No per-rank stats, no energy cost, no scaling info - only flavor text + icon.** This is a hard limit, see §6. |
 | `components` | `Array<{name, itemCount, uniqueName, description, imageName, tradable, drops}>` | Chassis / Neuroptics / Systems / Blueprint. `drops` is pre-joined with location/chance/rarity. |
 | `health`, `shield`, `armor`, `power`, `sprintSpeed` | number | Base stats at R0 |
 | `imageName` | string | Frame splash icon |
 | `type` | string | |
 | `masterable` | boolean | Whether it grants MR XP |
 | `isPrime` | boolean | |
-| `wikiaUrl`, `releaseDate`, `introduced`, `patchlogs` | — | Same as Mods |
+| `wikiaUrl`, `releaseDate`, `introduced`, `patchlogs` | - | Same as Mods |
 
-#### Weapons (~700 — Primary + Secondary + Melee + Arch-*)
+#### Weapons (~700 - Primary + Secondary + Melee + Arch-*)
 
 **Endpoint:** `api.warframestat.us/weapons?only=...`
 
@@ -87,7 +89,7 @@ Your single source of truth for everything that isn't drops or worldstate. Prima
 | `fireRate`, `criticalChance`, `criticalMultiplier`, `procChance`, `magazineSize`, `reloadTime` | number | Base stats |
 | `components` | array | Build parts (same shape as Warframes) |
 | `polarities` | string[] | |
-| `imageName`, `wikiaUrl`, `releaseDate`, `introduced`, `patchlogs`, `tradable`, `isPrime` | — | |
+| `imageName`, `wikiaUrl`, `releaseDate`, `introduced`, `patchlogs`, `tradable`, `isPrime` | - | |
 
 #### Sentinels (~12)
 
@@ -95,13 +97,13 @@ Your single source of truth for everything that isn't drops or worldstate. Prima
 
 Fields: `uniqueName`, `name`, `description`, `health`, `shield`, `armor`, `components`, `abilities`, `polarities`, `masteryReq`, `imageName`, `wikiaUrl`, `releaseDate`, `tradable`, `isPrime`, `introduced`, `patchlogs`.
 
-#### Pets (~20 — Kubrows, Kavats, Predasites, Vulpaphylas, MOAs, Hounds)
+#### Pets (~20 - Kubrows, Kavats, Predasites, Vulpaphylas, MOAs, Hounds)
 
 **Endpoint:** GitHub raw only
 
 Same shape as Sentinels, plus `type` field distinguishing the pet category.
 
-#### Arcanes (168 — all captured, including the 51 that the old pipeline dropped)
+#### Arcanes (168 - all captured, including the 51 that the old pipeline dropped)
 
 **Endpoint:** GitHub raw only (api.warframestat.us shape didn't match)
 
@@ -133,18 +135,18 @@ Fields: `uniqueName`, `name`, `description`, `type`, `category`, `imageName`, `w
 These fields exist in the raw WFCD JSON but are excluded from your `?only=` filter or your parser. Adding them is one line per field. Payload cost is modest (~2× per category at most).
 
 **Weapons:**
-- `damage` — **per-damage-type breakdown**: Impact/Puncture/Slash/Cold/Heat/Electricity/Toxin/Blast/Corrosive/Gas/Magnetic/Radiation/Viral. Currently you only have `totalDamage`.
-- `attacks` — per-attack stats for melee: normal swing, heavy attack, slam attack, slide attack, ground slam radius.
+- `damage` - **per-damage-type breakdown**: Impact/Puncture/Slash/Cold/Heat/Electricity/Toxin/Blast/Corrosive/Gas/Magnetic/Radiation/Viral. Currently you only have `totalDamage`.
+- `attacks` - per-attack stats for melee: normal swing, heavy attack, slam attack, slide attack, ground slam radius.
 - `accuracy`, `noise` (Alarming/Silent), `trigger` (Auto/Semi/Charge/Burst/Held), `disposition` (1.0–1.6, the riven multiplier)
 - `zoom`, `secondary` (alt-fire stats for weapons like Stahlta)
 - `omegaAttenuation`, `buildPrice`, `buildTime`, `marketCost`, `skipBuildTimePrice`, `consumeOnBuild`
 
 **Warframes:**
-- `passiveDescription` — **the passive ability text**, currently missing entirely
+- `passiveDescription` - **the passive ability text**, currently missing entirely
 - `sex`, `buildPrice`, `buildTime`, `skipBuildTimePrice`, `bpCost`, `consumeOnBuild`
 
 **Mods:**
-- `availability` — text describing where the mod is earnable (separate from drops)
+- `availability` - text describing where the mod is earnable (separate from drops)
 - `fusionLimit`, `numFusions`, `excludeFromCodex`
 
 **Universal:**
@@ -154,25 +156,25 @@ These fields exist in the raw WFCD JSON but are excluded from your `?only=` filt
 
 These exist in `warframe-items` (or could be added to fetch config) but aren't currently in your pipeline:
 
-- **Skins** (`Skins.json`) — Warframe/weapon skins, Tennogen, Deluxe variants. **Available.**
-- **Quests** (`Quests.json`) — quest names, rewards, prerequisites. **Available but WFCD coverage is incomplete upstream.**
-- **Fish** (`Fish.json`) — Cetus/Fortuna/Cambion/Zariman fishing. **Available.**
-- **Sigils, Glyphs, Emotes, Sugatras** — scattered across Misc/Cosmetics, partial.
-- **Mining ore/gems** — partially in Resources.
+- **Skins** (`Skins.json`) - Warframe/weapon skins, Tennogen, Deluxe variants. **Available.**
+- **Quests** (`Quests.json`) - quest names, rewards, prerequisites. **Available but WFCD coverage is incomplete upstream.**
+- **Fish** (`Fish.json`) - Cetus/Fortuna/Cambion/Zariman fishing. **Available.**
+- **Sigils, Glyphs, Emotes, Sugatras** - scattered across Misc/Cosmetics, partial.
+- **Mining ore/gems** - partially in Resources.
 
 ### Definitively NOT in WFCD (any of its repos)
 
-- **Enemies / Codex creatures** — health, armor, shield, faction, damage resistance tables. Not in `warframe-items`. Wiki only.
-- **Per-tile node geometry / tilesets** — `warframe-worldstate-data` has `solNodes.json` (mission name, planet, faction, type) but no map data.
-- **Focus trees** — individual focus way stats per pip. Wiki only.
-- **Helminth subsume table** — which subsume goes on which slot, costs. Wiki only.
-- **Lich/Sister/Coda ephemera + per-element bonuses + quirks** — wiki only.
-- **Riven disposition history** — current snapshot only.
-- **Conclave PvP stats** — none.
+- **Enemies / Codex creatures** - health, armor, shield, faction, damage resistance tables. Not in `warframe-items`. Wiki only.
+- **Per-tile node geometry / tilesets** - `warframe-worldstate-data` has `solNodes.json` (mission name, planet, faction, type) but no map data.
+- **Focus trees** - individual focus way stats per pip. Wiki only.
+- **Helminth subsume table** - which subsume goes on which slot, costs. Wiki only.
+- **Lich/Sister/Coda ephemera + per-element bonuses + quirks** - wiki only.
+- **Riven disposition history** - current snapshot only.
+- **Conclave PvP stats** - none.
 
 ---
 
-## 2. WFCD `warframe-drop-data` — the drops blob
+## 2. WFCD `warframe-drop-data` - the drops blob
 
 **Source:** `drops.warframestat.us/data/all.json` (primary) / `raw.githubusercontent.com/WFCD/warframe-drop-data/master/data/all.json` (fallback).
 
@@ -216,12 +218,12 @@ Plus per-drop context (preserved during parsing): planet, node, missionType, rel
 
 ### Drop data gaps & weak coverage
 
-- **Conjunction Survival, Disruption demolyst rotations, Granum Crown rotations** — sometimes missing rotation labels; parser silently drops them.
-- **Lich / Sister / Coda weapons** — drop chances per murmur tier are not consistently in this dataset.
-- **Eidolons / Profit-Taker / Orphix / Archons** — partial; some entries list reward names with no `chance`.
-- **Railjack** — node-level drops only, not per-component.
-- **Duviri Spiral** — sparse coverage.
-- **Event-exclusive rewards** — appear in `transientRewards` but go stale once the event ends.
+- **Conjunction Survival, Disruption demolyst rotations, Granum Crown rotations** - sometimes missing rotation labels; parser silently drops them.
+- **Lich / Sister / Coda weapons** - drop chances per murmur tier are not consistently in this dataset.
+- **Eidolons / Profit-Taker / Orphix / Archons** - partial; some entries list reward names with no `chance`.
+- **Railjack** - node-level drops only, not per-component.
+- **Duviri Spiral** - sparse coverage.
+- **Event-exclusive rewards** - appear in `transientRewards` but go stale once the event ends.
 
 ---
 
@@ -261,11 +263,11 @@ Used by your worker for `/v1/worldstate`, served separately from codex. Cached i
 
 ---
 
-## 4. Icons & images — what visuals you have
+## 4. Icons & images - what visuals you have
 
 | Source | What it gives | URL pattern |
 |---|---|---|
-| `cdn.warframestat.us/img/<imageName>` | **One square icon per item** — extracted from game files | `https://cdn.warframestat.us/img/<imageName>` |
+| `cdn.warframestat.us/img/<imageName>` | **One square icon per item** - extracted from game files | `https://cdn.warframestat.us/img/<imageName>` |
 | WFCD ability `imageName` | Ability slot icon (diamond/circle UI element) | same CDN |
 | `wikiaUrl` field | Direct link to wiki.warframe.com page | per-item field |
 
@@ -279,7 +281,7 @@ Used by your worker for `/v1/worldstate`, served separately from codex. Cached i
 - ❌ **Codex enemy renders** beyond what's on the wiki
 - ❌ **Animated mod card visuals** (the holographic mod animation)
 
-**The wiki has all of this** but `wiki.warframe.com` has **no JSON/REST API** — only MediaWiki's `api.php` returning HTML/wikitext. To use it you'd need to scrape, parse infoboxes/gallery tags, and respect CC BY-SA attribution.
+**The wiki has all of this** but `wiki.warframe.com` has **no JSON/REST API** - only MediaWiki's `api.php` returning HTML/wikitext. To use it you'd need to scrape, parse infoboxes/gallery tags, and respect CC BY-SA attribution.
 
 ---
 
@@ -295,12 +297,12 @@ Mentioned in `CLAUDE.md` as a data source but **not currently integrated into th
 
 ---
 
-## 6. Hard limitations — what you CANNOT get from any current source
+## 6. Hard limitations - what you CANNOT get from any current source
 
 These need a new data source (wiki scrape, community-maintained spreadsheet, or game-file parsing) to provide:
 
-1. **Ability mechanics & scaling** — duration, range, energy cost, base damage values, mod-affected stats. WFCD only has the flavor description + icon.
-2. **Build orders / popular meta builds** — Overframe.gg has this but no public API; warframe-builder.com has limited export.
+1. **Ability mechanics & scaling** - duration, range, energy cost, base damage values, mod-affected stats. WFCD only has the flavor description + icon.
+2. **Build orders / popular meta builds** - Overframe.gg has this but no public API; warframe-builder.com has limited export.
 3. **Riven dispositions history** (current snapshot only).
 4. **Lich / Sister / Coda quirks tables** + ephemera + per-element bonuses.
 5. **Steel Path Incursions rotation** (daily, not surfaced clearly anywhere).
@@ -309,12 +311,12 @@ These need a new data source (wiki scrape, community-maintained spreadsheet, or 
 8. **Conclave / PvP stats.**
 9. **Open-world fishing/mining spawn rates** (day/night dependencies, hotspot timing).
 10. **Tenno Specters / Companion AI behavior data.**
-11. **Enemy codex entries** — health/armor/shield scaling, faction, damage types they take, drop tables linked from the enemy side.
-12. **Full DE patch notes text** — you get titles + dates + truncated summary fields via WFCD `patchlogs`, capped at 20 entries per item.
+11. **Enemy codex entries** - health/armor/shield scaling, faction, damage types they take, drop tables linked from the enemy side.
+12. **Full DE patch notes text** - you get titles + dates + truncated summary fields via WFCD `patchlogs`, capped at 20 entries per item.
 
 ---
 
-## Design implications — what this means for your UI
+## Design implications - what this means for your UI
 
 When designing codex / wiki views, you can confidently rely on:
 
@@ -331,11 +333,11 @@ When designing codex / wiki views, you can confidently rely on:
 
 **Design around but be careful with:**
 
-⚠️ Abilities — you have name + description + icon, but **no scaling, no energy cost, no per-rank values**. Don't design an "ability calculator" view.
-⚠️ Ability icons — they're the UI slot icons, not full ability art / video.
-⚠️ Multiple images — there's only one icon per item. Don't design gallery / carousel views unless you're prepared to scrape the wiki.
-⚠️ Quests — coverage is incomplete in WFCD. Don't promise a complete quest tracker.
-⚠️ Enemies — no data at all. Don't design enemy stat cards yet.
+⚠️ Abilities - you have name + description + icon, but **no scaling, no energy cost, no per-rank values**. Don't design an "ability calculator" view.
+⚠️ Ability icons - they're the UI slot icons, not full ability art / video.
+⚠️ Multiple images - there's only one icon per item. Don't design gallery / carousel views unless you're prepared to scrape the wiki.
+⚠️ Quests - coverage is incomplete in WFCD. Don't promise a complete quest tracker.
+⚠️ Enemies - no data at all. Don't design enemy stat cards yet.
 
 **Hard "do not design for":**
 
@@ -364,4 +366,4 @@ When you're ready to add the "richer WFCD fields" you already approved, here's t
 
 ---
 
-*Generated 2026-05-27 from a live audit of the build-codex pipeline. Re-verify against `cloudflare-worker/src/` if anything in this doc seems wrong — the code is the truth, this is a snapshot.*
+*Generated 2026-05-27 from a live audit of the build-codex pipeline. Re-verify against `cloudflare-worker/src/` if anything in this doc seems wrong - the code is the truth, this is a snapshot.*

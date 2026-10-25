@@ -8,7 +8,8 @@ Offline-first Warframe companion. Today it is a React 19 + Vite web app on Cloud
 2. **`docs/decisions/`** says what was decided and why. Newest approved decision wins; superseded ones stay, marked.
 3. **This file** holds rules, invariants, and commands. It loses to code and decisions.
 4. **`HANDOFF.md`** is the current task, verified state, blockers, and next steps. It is overwritten each session and loaded at session start.
-5. Auto-memory holds the author's preferences only. The Obsidian vault holds research, post-mortems, and archives. Neither is authority for project state.
+5. **`docs/`** holds the rest: `architecture.md`, `roadmap.md`, `data-sources.md`, `field-notes.md`, `research.md`, `post-mortems.md`, and one spec per finished page (`docs/decisions/0007`). All project documentation lives in this repo only.
+6. Auto-memory holds the author's working preferences only. It is not authority for project state.
 
 If two sources disagree, say so and ask. Do not pick silently.
 
@@ -107,10 +108,11 @@ Canonical spec is `.impeccable.md`. Read it before building UI. Priority: the au
 | Cloudflare KV and R2 | Worldstate, codex manifest and chunks |
 | GitHub Actions | Codex build every 6h, deploy on push to `main` |
 
-`DATA_ARCHITECTURE.md` and `DATA-SOURCES.md` are older reference maps; sections marked in them were not re-verified.
+Data flow is in `docs/architecture.md`. Field-level coverage of each source is in `docs/data-sources.md` (written 2026-05-27, not re-verified).
 
 ## Workflows
 
-- **Research:** the living research dossier is kept outside the repo, in the author's Documents folder. Read it before researching the Warframe ecosystem, competitors, or data sources, and append dated, sourced findings after. Never start a parallel research file.
-- **Post-mortem:** when asked to "archive this bug" or "post-mortem", append to `Notes/Post_Mortems.md` in the Obsidian vault with: date, the bug, the gotcha, the fix. The Obsidian MCP write tools (`obsidian_create_note`, `obsidian_edit_note` with an etag) worked when tested on 2026-10-25; direct file editing also works.
+- **Research:** read `docs/research.md` before researching the Warframe ecosystem, competitors, or data sources, and append dated, sourced findings after. Never start a parallel research file.
+- **Post-mortem:** when asked to "archive this bug" or "post-mortem", append to `docs/post-mortems.md` with: date, the bug, the gotcha, the fix.
+- **New page:** finish one page completely before the next. When it is done, write its spec as `docs/<page>.md` (see `docs/celestial-pendulum.md`). Do not leave `.md` files inside `src/`.
 - **Windows files:** read and write UTF-8 explicitly (`[IO.File]::ReadAllText/WriteAllText` with `UTF8Encoding`). `Get-Content` corrupts non-ASCII text.

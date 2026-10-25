@@ -16,3 +16,4 @@ One short file per approved decision. A decision is only here if the author appr
 | 0004 | Items resolve through the codex, the old catalogue is retired | Approved |
 | 0005 | Six-systems target architecture | Approved (phases partly done) |
 | 0006 | Weapon notes: the card owns the numbers | Approved |
+| 0007 | One home for documentation | Approved |

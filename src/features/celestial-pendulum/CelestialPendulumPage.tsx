@@ -14,7 +14,7 @@
  * where it doesn't. Overview is interim ("what's good now" board) until built last.
  * App-wide live cycle pills + Baro + the Dailies panel live in the global header.
  *
- * Plan + rationale: Celestial-Pendulum-Blueprint.md. All styling lives in
+ * Plan + rationale: docs/celestial-pendulum.md. All styling lives in
  * CelestialPendulum.module.css (tokens only).
  */
 

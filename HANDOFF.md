@@ -2,30 +2,28 @@
 
 Overwrite this file at the end of every session. Keep it under one screen. Everything here was true on the date below; check it against `git` and the code before relying on it.
 
-**Updated:** 2026-10-25 · **Branch:** `Development`. The cleanup commits (`8bd569d`, `976dfe5`, `18be996`) and the `<OVERGUARD_GAIN>` fix (`c801d42`) are pushed to `origin/Development`. This handoff update is the commit after `c801d42`. `main` is unchanged at `d6257cf` and does not have the fix yet. Remote: `https://github.com/ashenvii/tennoplan.git` (the repo moved from `Gizzy2x/tennoplan`).
+**Updated:** 2026-10-25 · **Branch:** `Development`, 7 commits ahead of `origin/Development` (not pushed). `main` is at `c97c04d` and was deployed today (Deploy to Cloudflare run `40233902653`, success).
 
-## Where the project is
-- Last real feature work (2026-06-16): weapon Cephalon's Notes finished (864 notes applied to real codex uniqueNames), plus `fireModes` and melee scalars from Public Export Plus. See `docs/decisions/0006`.
-- Waiting on the author: the weapon-card UI rework (card is being moved into the page header). Data layer is done and decoupled from it.
-- Deferred by the author: crit/status percentage prose pass, `core/` calc engine, build planner, community submissions.
+## This session
+Consolidated all documentation into the repo (`docs/decisions/0007`). New: `docs/architecture.md`, `docs/roadmap.md`, `docs/field-notes.md`. Moved in: `docs/data-sources.md`, `docs/research.md`, `docs/post-mortems.md`, `docs/celestial-pendulum.md`. Removed from git: `DATA_ARCHITECTURE.md` and 19 stale `*-Blueprint.md` files under `src/`. Docs only, no code changed except one comment in `CelestialPendulumPage.tsx`. Committed on `Development` (this handoff is the commit that follows `c97c04d`, message "Move all documentation into docs/ and remove the stale copies").
 
-## Verified on 2026-10-25
-- `npx tsc -b` (root): no errors.
-- `cd cloudflare-worker && npx tsc --noEmit`: no errors.
-- `cd cloudflare-worker && npm run build-codex`: exits 0 on `c801d42`, 864 notes applied, token scan 45 known and 0 unknown. An unknown icon token fails the build with exit 1 (`process.exit(1)` in the token scan); that was the case for `<OVERGUARD_GAIN>` before the fix.
-- `npm run build` (root): exits 0 on `c801d42`.
-- Live worker `/v1/pulse` answers with a current sync time.
-- GitHub "Type-check" workflow (`check.yml`) run `40232846647` on `c801d42`: success, app and worker type-checks both passed.
-- No production deployment, workflow re-enable, or Cloudflare worker deletion was done during the cleanup.
+Everything as it stood before is in `Main_Vault/_tennoplan-docs-backup-2026-10-25.zip` (repo docs, vault Notes, Documents dossier, auto-memory).
 
-## Problems that are still open
-- **Codex refresh is still off.** GitHub disabled the scheduled "Build & Publish Codex" workflow (`disabled_inactivity`, last run 2026-08-16; still disabled when checked 2026-10-25). The repo is public, so the 60-day inactivity rule applies. The live codex manifest is dated 2026-08-14. Restoring it needs a production-affecting step that the author must approve.
-- **The `<OVERGUARD_GAIN>` fix is not on `main` yet.** It is a flag code in `TENNOICON_FLAG_CODES` (an unfilled value placeholder in Narin's Naraemagi, not a glyph), so the displayed sentence reads "Gain  Overguard" with no number. Until `Development` is merged into `main`, the codex workflow would fail at the token scan if re-enabled. Merging to `main` triggers `deploy.yml` (frontend and API worker), which has not run since 2026-06-16.
-- No automated tests exist. Verification is the commands in `CLAUDE.md`.
-- The `web` worker (`web.tennoplan.workers.dev`) is a stale frontend copy from 2026-06-13 and still serves an old build. The live frontend is `tennoplan`. Retiring `web` is a production change for the author to decide.
+## Still to do from the cleanup (needs the author's yes)
+- Delete the old copies outside git: vault `Notes/`, `Documents/Tennoplan Research/`, and in the repo the ignored `Notes/`, `Research/`, `.impeccable.legacy.md`, `snapshot.sh` and the `.git/hooks/post-commit` that calls it. The `.gitignore` entries for them were already removed, so they show as untracked until deleted.
+- Prune auto-memory down to preferences (keep repo authorship, low maintenance, no preview screenshot, frozen transitions; the rest now lives in `docs/` or `CLAUDE.md`).
+
+## Verified
+- Paths cited in `docs/architecture.md` exist; routes, Dexie v9 and wrangler bindings were read from code.
+- Live `/v1/pulse` answers with current data.
+- Type-checks and `build-codex` were not re-run (docs-only change). Last passing run was on `c801d42`.
+
+## Open problems
+- **Codex refresh:** `Build & Publish Codex` lists as active but its last scheduled run was 2026-08-16. Watch for the next scheduled run; if none, run `gh workflow enable build-codex.yml` or dispatch it. The live codex manifest was dated 2026-08-14 when last checked.
+- The stale `web` worker (`web.tennoplan.workers.dev`, old frontend from 2026-06-13) is still deployed. Retiring it is the author's call.
+- No automated tests exist.
 
 ## Next
-1. Author decides: merge `Development` into `main` first (production deploy), then re-enable the codex workflow by hand (`gh workflow enable build-codex.yml`). An in-workflow enable step was rejected because nothing documents that it resets the inactivity timer. Showing codex age in the app is the suggested follow-up.
-2. Author decides: retire the stale `web` worker or keep it.
-3. Author reviews the proposed memory and vault archive list before anything is moved.
-4. Then resume product work from the weapon-card UI rework.
+1. Author approves the deletions and memory prune above.
+2. Redesign page by page, Celestial Pendulum first (see `docs/roadmap.md`).
+3. Weapon card UI rework when the author is ready.
