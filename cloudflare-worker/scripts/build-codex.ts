@@ -113,6 +113,11 @@ async function main(): Promise<void> {
     console.error(`[build-codex] PE+ v${overlay.peVersion}: matched ${JSON.stringify(overlay.matched)}, ` +
       `divergence ${JSON.stringify(overlay.statDivergence)}, synthesized ${overlay.synthesized} ` +
       `(gap ${JSON.stringify(overlay.peOnly)}), wfcd-only ${JSON.stringify(overlay.wfcdOnly)}`);
+  } else if (process.env.CODEX_REQUIRE_PEPLUS === '1') {
+    // CI sets this so a missing or unreadable PE+ package fails the build before
+    // upload-codex runs, instead of publishing WFCD-only data over the enriched blob.
+    console.error('[build-codex] FATAL: PE+ layer absent and CODEX_REQUIRE_PEPLUS=1, refusing to build WFCD-only data.');
+    process.exit(1);
   } else {
     console.error('[build-codex] PE+ layer absent — WFCD-only build');
   }

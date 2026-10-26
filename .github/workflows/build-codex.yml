@@ -78,13 +78,17 @@ jobs:
       # the 6h cadence always picks up post-patch data — the package version
       # IS the data version. Never vendored, never in the lockfile (~100MB,
       # and pinning would freeze the data forever). If the registry hiccups,
-      # the build degrades gracefully to WFCD-only (layer-optional loader).
+      # a failed install fails the job before anything is published (the build
+      # also enforces this via CODEX_REQUIRE_PEPLUS).
       - name: Install Public Export Plus (fresh data, not pinned)
         working-directory: cloudflare-worker
-        run: npm install --no-save warframe-public-export-plus@latest || echo "::warning::PE+ install failed — building WFCD-only"
+        run: npm install --no-save warframe-public-export-plus@latest
 
       - name: Build codex blob (Node — no Workers CPU limit)
         working-directory: cloudflare-worker
+        env:
+          # Fail before any KV/R2 write if PE+ is missing; never publish WFCD-only data.
+          CODEX_REQUIRE_PEPLUS: '1'
         run: npm run build-codex
 
       - name: Upload blob + metadata to Cloudflare KV
