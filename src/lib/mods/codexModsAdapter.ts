@@ -26,6 +26,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/adapters/storage/db';
 import { getIconUrl } from '@/lib/icons/IconResolver';
 import type { TennoplanItem, PatchLogEntry, IntroducedInfo } from '@/core/domain/tennoplanApi';
+import { dedupeMods } from './dedupeMods';
 import modsRawMap from './mods-map.json';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -129,7 +130,7 @@ let _fallbackEntries: ModEntry[] | null = null;
 
 function getFallbackEntries(): ModEntry[] {
   if (_fallbackEntries) return _fallbackEntries;
-  const byName = new Map<string, ModEntry>();
+  const entries: ModEntry[] = [];
   for (const [uniqueName, raw] of Object.entries(FALLBACK_RAW)) {
     const entry: ModEntry = {
       uniqueName,
@@ -148,10 +149,9 @@ function getFallbackEntries(): ModEntry[] {
       isExilus:    raw.isExilus,
     };
     if (raw.imageName) entry.iconUrl = getIconUrl(raw.imageName);
-    const key = entry.name.toLowerCase();
-    if (!byName.has(key)) byName.set(key, entry);
+    entries.push(entry);
   }
-  _fallbackEntries = [...byName.values()].sort((a, b) => a.name.localeCompare(b.name));
+  _fallbackEntries = dedupeMods(entries);
   return _fallbackEntries;
 }
 
@@ -252,8 +252,10 @@ export function modEntryToItem(mod: ModEntry): TennoplanItem {
  * consumers never need a loading state. The hook does still re-run when
  * Dexie data arrives, swapping from fallback to live codex seamlessly.
  *
- * Dedup rule: when two uniqueNames resolve to the same display name
- * (rare — WFCD legacy paths for a few mods), the first seen wins.
+ * Identity is the uniqueName, not the display name: tier variants (Serration
+ * has Beginner, Intermediate and full-rank records) and same-named mods from
+ * different systems are all listed. Only records identical in every field
+ * except the uniqueName (and the derived iconUrl) are collapsed. See dedupeMods.
  */
 export function useAllMods(): ModEntry[] {
   const items = useLiveQuery(
@@ -266,13 +268,7 @@ export function useAllMods(): ModEntry[] {
     if (!items || !codexIsEnriched(items)) {
       return getFallbackEntries();
     }
-    const byName = new Map<string, ModEntry>();
-    for (const item of items) {
-      const entry = projectMod(item);
-      const key = entry.name.toLowerCase();
-      if (!byName.has(key)) byName.set(key, entry);
-    }
-    return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name));
+    return dedupeMods(items.map(projectMod));
   }, [items]);
 }
 

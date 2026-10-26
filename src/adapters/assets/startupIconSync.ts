@@ -145,26 +145,38 @@ async function _run(fullRedownload: boolean): Promise<void> {
 
   const preflight = await testCdnConnection(probeCandidates);
   if (!preflight.ok) {
+    // In a plain browser, fetch() to the CDN is blocked by CORS (a TypeError), so
+    // bulk caching cannot work there. Icons still display via direct <img>
+    // loading (see iconBlobCache), so this is expected, not an error.
+    const browserCorsBlock = preflight.backend === 'browser' && preflight.errorName === 'TypeError';
     const aborted: IconSyncProgress = {
       phase:   'aborted',
       cached:  0,
       failed:  0,
       total,
       pct:     0,
-      error:   `Preflight failed via ${preflight.backend}: ${preflight.message}. ` +
-               `Likely fixes: (1) restart Tauri to load tauri-plugin-http, ` +
-               `(2) verify network access to cdn.warframestat.us.`,
+      error:   browserCorsBlock
+        ? `Icons load directly from the CDN in the browser. Local icon caching needs the desktop app, ` +
+          `because the browser cannot read cdn.warframestat.us with fetch() (${preflight.message}).`
+        : `Preflight failed via ${preflight.backend}: ${preflight.message}. ` +
+          `Likely fixes: (1) restart Tauri to load tauri-plugin-http, ` +
+          `(2) verify network access to cdn.warframestat.us.`,
       backend: preflight.backend,
     };
     _snapshot = aborted;
     _phase    = 'idle';
     emit(aborted);
-    logger.error('network', `Icon sync preflight failed: ${preflight.message}`, {
+    const detail = {
       backend:    preflight.backend,
       message:    preflight.message,
       probedUrl:  preflight.url,
       durationMs: preflight.durationMs,
-    }, 'startupIconSync');
+    };
+    if (browserCorsBlock) {
+      logger.info('icons', `Icon sync skipped in browser: ${preflight.message}`, detail, 'startupIconSync');
+    } else {
+      logger.error('network', `Icon sync preflight failed: ${preflight.message}`, detail, 'startupIconSync');
+    }
     return;
   }
   logger.info('icons', `Icon sync preflight OK (${preflight.backend}, ${preflight.durationMs}ms)`, {

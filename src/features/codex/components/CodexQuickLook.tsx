@@ -18,15 +18,16 @@ import { Sheet } from '@/components/common/Sheet';
 import { db } from '@/adapters/storage/db';
 import { useQuickLook } from '@/store/quickLook';
 import { useNavigationStore } from '@/store/navigation';
+import { fillDescriptionTokens } from '@/lib/text/descriptionTokens';
 import type { TennoplanItem, TpDropLocation } from '@/core/domain/tennoplanApi';
 import styles from './CodexQuickLook.module.css';
 
-// Strip residual game markup: <DT_..> tags, |TOKEN| placeholders, escaped newlines.
+// Strip residual game markup (<DT_..> tags, escaped newlines) and give unresolved
+// |TOKEN| placeholders a readable label.
 function sanitize(text?: string): string {
   if (!text) return '';
-  return text
+  return fillDescriptionTokens(text)
     .replace(/<[^>]+>/g, '')
-    .replace(/\|[A-Z0-9_]+\|/g, '')
     .replace(/\\[rn]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();

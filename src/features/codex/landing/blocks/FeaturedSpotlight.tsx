@@ -28,6 +28,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { ArrowRight } from 'lucide-react';
 import { db } from '@/adapters/storage/db';
+import { fillDescriptionTokens } from '@/lib/text/descriptionTokens';
 import type { TennoplanItem, ItemCategory } from '@/core/domain/tennoplanApi';
 import {
   SPOTLIGHT_POOL,
@@ -81,7 +82,7 @@ interface AnchoredCompositionProps {
 }
 
 function AnchoredComposition({ entry, onSelectEntry }: AnchoredCompositionProps) {
-  const description = (entry.description ?? '')
+  const description = fillDescriptionTokens(entry.description ?? '')
     .replace(/<[A-Z0-9_]+>/g, '')
     .replace(/\\n/g, ' ')
     .replace(/\s+/g, ' ')

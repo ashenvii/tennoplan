@@ -148,6 +148,12 @@ export interface PeRecipe {
   skipBuildTimePrice?: number;   // platinum to rush
 }
 
+/** ExportChallenges entry. Only the field we consume. */
+export interface PeChallenge {
+  /** How many times the objective must be done ("Kill |COUNT| Enemies"). */
+  requiredCount?: number;
+}
+
 export interface PePlusData {
   warframes: ReadonlyMap<string, PePowersuit>;
   weapons:   ReadonlyMap<string, PeWeapon>;
@@ -155,6 +161,8 @@ export interface PePlusData {
   arcanes:   ReadonlyMap<string, PeArcane>;
   /** Crafting recipes keyed by `resultType` (the built item's uniqueName). */
   recipes:   ReadonlyMap<string, PeRecipe>;
+  /** Challenges (Nightwave etc.) keyed by uniqueName. Empty if the package has no ExportChallenges.json. */
+  challenges: ReadonlyMap<string, PeChallenge>;
   /** English localization: dict key → display string. */
   dict:      Record<string, string>;
   /** Package version, recorded for provenance (e.g. "0.6.2"). */
@@ -190,6 +198,10 @@ export function loadPePlus(): PePlusData | null {
     const arcanes   = read<Record<string, PeArcane>>('ExportArcanes.json');
     const recipesRaw = read<Record<string, PeRecipe>>('ExportRecipes.json');
     const dict      = read<Record<string, string>>('dict.en.json');
+    // Optional: a missing or unreadable challenges file must not drop the whole layer.
+    let challenges: Record<string, PeChallenge> = {};
+    try { challenges = read<Record<string, PeChallenge> | null>('ExportChallenges.json') ?? {}; }
+    catch { warn('ExportChallenges.json unreadable, challenge counts stay unresolved'); }
     const version   = read<{ version?: string }>('package.json').version ?? 'unknown';
 
     // Recipes are keyed by recipe id; we index by resultType (the built item)
@@ -205,6 +217,7 @@ export function loadPePlus(): PePlusData | null {
       mods:      toMap(mods),
       arcanes:   toMap(arcanes),
       recipes,
+      challenges: toMap(challenges),
       dict,
       version,
     };
@@ -217,6 +230,7 @@ export function loadPePlus(): PePlusData | null {
       mods:      data.mods.size,
       arcanes:   data.arcanes.size,
       recipes:   data.recipes.size,
+      challenges: data.challenges.size,
       dictKeys:  Object.keys(dict).length,
     });
     return data;

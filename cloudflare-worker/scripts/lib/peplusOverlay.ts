@@ -28,8 +28,9 @@
 
 import type { EnrichedItem } from '../../src/codex/enricher';
 import type { ItemStats, ItemRarity, WeaponFireMode, WeaponAttack } from '../../src/types';
-import type { PePlusData, PePowersuit, PeWeapon, PeUpgrade, PeRecipe, PeBehaviour, PeAttackData } from './peplus';
+import type { PePlusData, PePowersuit, PeWeapon, PeUpgrade, PeRecipe, PeChallenge, PeBehaviour, PeAttackData } from './peplus';
 import { peName } from './peplus';
+import { fillChallengeCount } from './challengeCounts';
 import { logger } from '../../src/logger';
 
 const log = (msg: string, data?: unknown) => logger.info('codex-peplus-overlay', msg, data);
@@ -63,6 +64,10 @@ export interface OverlayReport {
   upgradeCosts:     number;
   /** Items given a foundry build cost from ExportRecipes (any category). */
   buildCosts:       number;
+  /** Challenge descriptions whose `|COUNT|` was filled from ExportChallenges.requiredCount. */
+  challengeCounts:  number;
+  /** Descriptions still holding `|COUNT|` because PE+ has no challenge for that uniqueName. */
+  challengeCountsUnresolved: number;
   /** PE+ records with no codex row (after junk filters) — the patch-day gap. */
   peOnly:           Record<string, number>;
   /** Of those, how many we synthesized into minimal entries. */
@@ -88,6 +93,8 @@ export function applyPePlusAuthority(items: EnrichedItem[], pe: PePlusData): Ove
     meleeScalarWeapons: 0,
     upgradeCosts:      0,
     buildCosts:        0,
+    challengeCounts:   0,
+    challengeCountsUnresolved: 0,
     peOnly:          {},
     synthesized:     0,
     wfcdOnly:        {},
@@ -105,6 +112,7 @@ export function applyPePlusAuthority(items: EnrichedItem[], pe: PePlusData): Ove
     }
     // Build cost applies to ANY craftable item, regardless of category.
     applyBuildCost(item, pe.recipes.get(item.uniqueName), report);
+    resolveChallengeCount(item, pe.challenges.get(item.uniqueName), report);
   }
 
   // ── 2. Gap report + synthesis ──
@@ -112,6 +120,25 @@ export function applyPePlusAuthority(items: EnrichedItem[], pe: PePlusData): Ove
 
   log('PE+ authority applied', { ms: Date.now() - t0, ...report });
   return report;
+}
+
+// ─── Challenge counts ─────────────────────────────────────────────────────────
+
+/**
+ * Nightwave challenge text is a template ("Kill |COUNT| Enemies while Aim
+ * Gliding"). PE+ carries the real requirement as requiredCount, joined on the
+ * exact uniqueName. Anything without a match keeps the token, and the app
+ * shows a readable fallback for it instead of inventing a number.
+ */
+function resolveChallengeCount(item: EnrichedItem, challenge: PeChallenge | undefined, report: OverlayReport): void {
+  if (!item.description?.includes('|COUNT|')) return;
+  const filled = fillChallengeCount(item.description, challenge?.requiredCount);
+  if (filled === null) {
+    report.challengeCountsUnresolved++;
+    return;
+  }
+  item.description = filled;
+  report.challengeCounts++;
 }
 
 // ─── Per-category overlays ────────────────────────────────────────────────────

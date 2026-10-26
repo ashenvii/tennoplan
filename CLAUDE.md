@@ -26,9 +26,10 @@ npx tsc -b                                   # root app type-check (tsc --noEmit
 cd cloudflare-worker && npx tsc --noEmit     # worker type-check, NOT covered by the root command
 cd cloudflare-worker && npm run build-codex  # full codex build, no production effect (writes ignored dist/)
 npm run build                                # tsc -b && vite build
+node --test scripts/*.test.mjs               # icon cache, mods list, description tokens (no runner to install)
 ```
 
-Run the worker type-check and `build-codex` before merging any change under `cloudflare-worker/`, including `fieldNotes.ts`. There is no automated test suite. Do not report a check as passing unless you ran it.
+Run the worker type-check and `build-codex` before merging any change under `cloudflare-worker/`, including `fieldNotes.ts`. There is no test runner. `scripts/*.test.mjs` are small `node:test` checks on pure logic (they transpile the real source with the installed TypeScript). UI behaviour is checked by running the app. Do not report a check as passing unless you ran it.
 
 ## Git and deploy
 

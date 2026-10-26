@@ -99,6 +99,8 @@ export interface ConnectionTestResult {
   ok:         boolean;
   url:        string;
   message:    string;
+  /** `Error.name` when the request threw (a CORS block is a `TypeError`). */
+  errorName?: string;
   backend:    FetchBackend;
   durationMs: number;
 }
@@ -128,6 +130,7 @@ async function probeOne(url: string): Promise<ConnectionTestResult> {
     return {
       ok: false, url,
       message: err instanceof Error ? `${err.name}: ${err.message}` : String(err),
+      ...(err instanceof Error && { errorName: err.name }),
       backend: diag.backend, durationMs: duration,
     };
   }

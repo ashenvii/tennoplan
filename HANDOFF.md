@@ -2,26 +2,25 @@
 
 Overwrite this file at the end of every session. Keep it under one screen. Everything here was true on the date below; check it against `git` and the code before relying on it.
 
-**Updated:** 2026-10-25 · **Branch:** `Development`, 7 commits ahead of `origin/Development` (not pushed). `main` is at `c97c04d` and was deployed today (Deploy to Cloudflare run `40233902653`, success).
+**Updated:** 2026-10-26 · **Branch:** `Development`. The bug-fix work below is the commit that follows `9a20c79` (the PE+ safety fix), not pushed. `main` is at `c97c04d`.
 
 ## This session
-Consolidated all documentation into the repo (`docs/decisions/0007`). New: `docs/architecture.md`, `docs/roadmap.md`, `docs/field-notes.md`. Moved in: `docs/data-sources.md`, `docs/research.md`, `docs/post-mortems.md`, `docs/celestial-pendulum.md`. Removed from git: `DATA_ARCHITECTURE.md` and 19 stale `*-Blueprint.md` files under `src/`. Docs only, no code changed except one comment in `CelestialPendulumPage.tsx`. Committed on `Development` (this handoff is the commit that follows `c97c04d`, message "Move all documentation into docs/ and remove the stale copies").
-
-Everything as it stood before is in `Main_Vault/_tennoplan-docs-backup-2026-10-25.zip` (repo docs, vault Notes, Documents dossier, auto-memory).
-
-## Cleanup finished
-The old copies are deleted (vault `Notes/`, Documents dossier, ignored repo `Notes/` and `Research/`, `.impeccable.legacy.md`, `snapshot.sh`, the `post-commit` hook). Auto-memory is pruned to four preference files. The backup zip is the only record of the old layout.
+Fixed the three open bugs locally. Nothing pushed or deployed; #6, #7 and #8 stay open on GitHub.
+- **#8 icons:** browser `fetch()` to `cdn.warframestat.us` is blocked by CORS (the CDN answers with a 301 that has no `Access-Control-Allow-Origin`), so `iconBlobCache` fell back to the placeholder. In the browser it now loads the CDN URL directly, verified with an `Image` probe, through the existing 15-slot queue. Tauri is unchanged (blob + Cache API). The browser cannot keep a local icon cache for the CDN; that needs the desktop app. Files: `iconBlobCache.ts`, `nativeFetch.ts` (`errorName`), `startupIconSync.ts`.
+- **#6 mods:** the browser no longer dedupes by display name. `src/lib/mods/dedupeMods.ts` keeps every `uniqueName` and collapses only records identical in every other field. The real list went from 1,546 to 1,787 mods; Serration shows its Rank 3, 5 and 10 tiers.
+- **#7 tokens:** the codex build fills `|COUNT|` in Nightwave challenge text from PE+ `ExportChallenges.requiredCount` (158 of 170 resolve; 12 weekly-hard challenges are not in PE+). Everything else renders as a readable label, for example `(damage)%`, through `src/lib/text/descriptionTokens.ts`, used by all six views. Warframe passive values have no source in our data, so they stay labelled, not filled.
 
 ## Verified
-- Paths cited in `docs/architecture.md` exist; routes, Dexie v9 and wrangler bindings were read from code.
-- Live `/v1/pulse` answers with current data.
-- Type-checks and `build-codex` were not re-run (docs-only change). Last passing run was on `c801d42`.
+- `node --test scripts/*.test.mjs`: 33 of 33 pass. `npx tsc -b`, worker `npx tsc --noEmit`, `npm run build` and `git diff --check` pass.
+- `build-codex` with `CODEX_REQUIRE_PEPLUS=1`: exits 0, 45 known and 0 unknown glyph codes, 212 of 224 challenge rows free of `|COUNT|`.
+- Real app (dev server on 5174 against the live worker): mod card art, Pendulum reward tiles, the three Serration tiers, Excalibur and Sirius & Orion passives, a challenge entry.
 
-## Open problems
-- **Codex refresh:** `Build & Publish Codex` lists as active but its last scheduled run was 2026-08-16. Watch for the next scheduled run; if none, run `gh workflow enable build-codex.yml` or dispatch it. The live codex manifest was dated 2026-08-14 when last checked.
-- The stale `web` worker (`web.tennoplan.workers.dev`, old frontend from 2026-06-13) is still deployed. Retiring it is the author's call.
-- No automated tests exist.
+## Open
+- The `|COUNT|` fix only reaches production after a codex rebuild from `main`. Merging to `main` deploys, so it is the author's call.
+- Passive values are still unknown. A source would have to be the wiki (the CI wiki fetch currently gets HTTP 403) or hand-kept data.
+- `npm run lint` fails: ESLint finds no config. Not looked at.
+- The stale `web` worker (`web.tennoplan.workers.dev`) is still deployed.
 
 ## Next
-1. Redesign page by page, Celestial Pendulum first (see `docs/roadmap.md`).
-2. Weapon card UI rework when the author is ready.
+1. Push `Development` when reviewed. Merging to `main` deploys and rebuilds the codex, so ask first.
+2. Redesign page by page, Celestial Pendulum first (see `docs/roadmap.md`).

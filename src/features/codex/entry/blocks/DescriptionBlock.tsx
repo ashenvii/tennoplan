@@ -11,6 +11,7 @@
  */
 
 import { useMemo } from 'react';
+import { fillDescriptionTokens } from '@/lib/text/descriptionTokens';
 import type { CodexEntry } from '../../types';
 import styles from './DescriptionBlock.module.css';
 
@@ -32,7 +33,7 @@ export function DescriptionBlock({ entry }: DescriptionBlockProps) {
 
 function sanitizeDescription(raw: string | undefined): string {
   if (!raw) return '';
-  return raw
+  return fillDescriptionTokens(raw)
     .replace(/<[A-Z0-9_]+>/g, '')   // strip <TAG> markers
     .replace(/\\n/g, ' ')           // turn escaped newlines into spaces
     .replace(/\\r/g, '')

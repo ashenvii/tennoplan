@@ -10,16 +10,18 @@
  *
  *   • Pipe-delimited placeholders — |STRENGTH|, |DURATION|, |RANGE|.
  *     These are runtime variable substitutions the game UI replaces
- *     with the actual numeric value at render time. WFCD doesn't
- *     resolve them, so we surface them as inline styled tokens (italic,
- *     teal-tinted) so the reader can see "a variable goes here" without
- *     mistaking it for broken text. Resolved values arrive later via
- *     wiki ingest, when the prose comes pre-filled.
+ *     with the actual numeric value at render time. None of our sources
+ *     carry the passive values, so we never guess one: each token is
+ *     shown as a lowercase label in parentheses, "(damage)%", styled
+ *     inline (italic) so the reader can see a value exists but is not
+ *     known. The label comes from lib/text/descriptionTokens, shared
+ *     with every other view that shows description text.
  *
  * Returns null when no passiveDescription is present.
  */
 
 import { useMemo, type ReactNode } from 'react';
+import { TOKEN_PATTERN, tokenLabel } from '@/lib/text/descriptionTokens';
 import type { CodexEntry } from '../../types';
 import styles from './PassiveBlock.module.css';
 
@@ -66,7 +68,7 @@ function toSegments(raw: string | undefined): Segment[] {
   if (!cleaned) return [];
 
   const segments: Segment[] = [];
-  const re = /\|([A-Z_]+)\|/g;        // |STRENGTH|, |DURATION|, …
+  const re = new RegExp(TOKEN_PATTERN);        // |STRENGTH|, |DURATION|, …
   let lastIdx = 0;
   let match: RegExpExecArray | null;
 
@@ -74,22 +76,13 @@ function toSegments(raw: string | undefined): Segment[] {
     if (match.index > lastIdx) {
       segments.push({ type: 'text', value: cleaned.slice(lastIdx, match.index) });
     }
-    segments.push({ type: 'placeholder', value: titleCase(match[1]) });
+    segments.push({ type: 'placeholder', value: tokenLabel(match[1]) });
     lastIdx = match.index + match[0].length;
   }
   if (lastIdx < cleaned.length) {
     segments.push({ type: 'text', value: cleaned.slice(lastIdx) });
   }
   return segments;
-}
-
-function titleCase(token: string): string {
-  // STRENGTH → Strength.  AFFINITY_SHARE → Affinity Share.
-  return token
-    .toLowerCase()
-    .split('_')
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ');
 }
 
 // ─── Rendering ───────────────────────────────────────────────────

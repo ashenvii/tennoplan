@@ -15,6 +15,7 @@
 
 import { Fragment, type ReactNode } from 'react';
 import clsx from 'clsx';
+import { fillDescriptionTokens } from '@/lib/text/descriptionTokens';
 import { TENNOICON_MAP, TENNOICON_TEXT_TOKENS, TENNOICON_FLAG_CODES } from './tennoIconMap';
 import styles from './StatLine.module.css';
 
@@ -36,7 +37,7 @@ export function StatLine({ text, as: As = 'span', className }: StatLineProps) {
   const isLowerBetter = text.includes('<LOWER_IS_BETTER>');
 
   // Replace literal "\n" sequences from the data with separator dots
-  const normalized = text.replace(/\\n/g, ' · ');
+  const normalized = fillDescriptionTokens(text).replace(/\\n/g, ' · ');
 
   const parts = normalized.split(TOKEN_REGEX);
   const nodes: ReactNode[] = [];

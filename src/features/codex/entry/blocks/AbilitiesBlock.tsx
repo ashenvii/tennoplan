@@ -11,6 +11,7 @@ import { useMemo } from 'react';
 import type { CodexEntry } from '../../types';
 import type { Ability } from '@/core/domain/tennoplanApi';
 import { getIconUrl } from '@/lib/icons/IconResolver';
+import { fillDescriptionTokens } from '@/lib/text/descriptionTokens';
 import styles from './AbilitiesBlock.module.css';
 
 interface AbilitiesBlockProps {
@@ -59,7 +60,7 @@ function AbilityRow({ index, ability }: AbilityRowProps) {
 }
 
 function sanitize(raw: string): string {
-  return raw
+  return fillDescriptionTokens(raw)
     .replace(/<[A-Z0-9_]+>/g, '')
     .replace(/\\n/g, ' ')
     .replace(/\\r/g, '')
